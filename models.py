@@ -1,39 +1,34 @@
 import util
 
 import numpy as np
-import keras
-from keras.models import Sequential, Model
+import tensorflow as tf
+from tensorflow import keras
 
-from keras.layers import Layer, Lambda, Reshape, LeakyReLU
-from keras.layers import Dense, Dropout, Flatten, Multiply
-from keras.layers import Conv2D, MaxPooling2D
-from keras.layers import Input, UpSampling2D
-from keras.layers import Conv1D, MaxPooling1D, UpSampling1D, BatchNormalization, LSTM, RepeatVector
-from keras import backend as K
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Layer, Reshape, LeakyReLU
+from tensorflow.keras.layers import Dense, Dropout, Flatten
+from tensorflow.keras.layers import Input, Conv1D, MaxPooling1D, UpSampling1D
+from tensorflow.keras.optimizers import Adam
 
-from keras.engine.base_layer import InputSpec
-from keras.optimizers import Adam, SGD, RMSprop
-from keras.layers.normalization import BatchNormalization
-from keras import regularizers, activations, initializers, constraints
-from keras.constraints import Constraint
+from tensorflow.keras import regularizers, activations, initializers, constraints
+from tensorflow.keras.constraints import Constraint
 
-from keras.callbacks import EarlyStopping, ModelCheckpoint
-from keras.callbacks import History 
+from tensorflow.keras.callbacks import EarlyStopping
+from tensorflow.keras.callbacks import History 
 
 from IPython.display import clear_output
 
-from keras.utils import plot_model
-from keras.models import load_model
+from tensorflow.keras.utils import plot_model
+from tensorflow.keras.models import load_model
 
-class Models:
+class models:
 
-	def __init__(self, name=[], x_dim=8, z_dim=3, timesteps=12, n_features=3, verbose=False):
+	def __init__(self, name=[], z_dim=3, timesteps=12, n_features=3, verbose=False):
 		self.name = name
 		self.d2d = []
 		self.d2zd = []
 		self.zd2d = []
 		self.z_dim = z_dim
-		self.x_dim = x_dim
 		self.timesteps = timesteps
 		self.n_features = n_features
         
@@ -57,26 +52,22 @@ class Models:
         
 	def decoder1D(self, encoded_d):
     
-		_ = Dense(24*2)(encoded_d)
-		_ = Reshape((3, 8*2))(_)
+		_ = Dense(240)(encoded_d)
+		_ = Reshape((15, 16))(_)
 
 		_ = Conv1D(8*2, 6, padding="same")(_)
 		_ = LeakyReLU(alpha=0.3)(_)
 		_ = UpSampling1D(2)(_)
 
-		_ = Conv1D(16*2, 3)(_)
+		_ = Conv1D(16*2, 3, padding="same")(_)
 		_ = LeakyReLU(alpha=0.3)(_)
 		_ = UpSampling1D(2)(_)
 
-		_ = Conv1D(16*2, 2)(_)
-		_ = LeakyReLU(alpha=0.3)(_)
-		_ = UpSampling1D(2)(_)
-
-		decoded_d = Conv1D(3, 3, padding='valid')(_)
+		decoded_d = Conv1D(3, 3, padding='same')(_)
 
 		return decoded_d
 
-	def train_autoencoder1D(self, x_train, d_train, load = False, epoch=200):
+	def train_autoencoder1D(self, d_train, load = False, epoch=200):
 
 		#data encoder
 		input_dt, encoded_d = self.encoder1D()
@@ -88,37 +79,26 @@ class Models:
 		self.d2d.summary()
 
 		#train the neural network alternatingly
-		totalEpoch = epoch
-		plot_losses1 = Util.PlotLosses()
+		plot_losses1 = util.PlotLosses()
 		history1 = History()
-		d2d_loss = np.zeros([totalEpoch, 4])
-    
-		for i in range(totalEpoch):
 
-			#train data recons AE
-			self.d2d.fit(d_train, d_train,        
-					epochs=1,
-					batch_size=128,
-					shuffle=True,
-					validation_split=0.2,
-					callbacks=[plot_losses1, EarlyStopping(monitor='loss', patience=60), history1])
+		#train data recons AE
+		self.d2d.fit(d_train, d_train,        
+				epochs = epoch,
+				batch_size = 128,
+				shuffle = True,
+				validation_split = 0.2,
+				callbacks = [plot_losses1, EarlyStopping(monitor='loss', patience=60), history1])
 
-			#copy loss
-			d2d_loss[i, :] = np.squeeze(np.asarray(list(history1.history.values())))
-
-			#write to folder for every 10th epoch for monitoring
-			figs = util.plotAllLosses(d2d_loss)
-			figs.savefig('readme/AE_Losses.png')
-			
 		#set the encoder model
 		self.d2zd = Model(input_dt, encoded_d)
 
 		#set the decoder model
 		zd_dec = Input(shape=(self.z_dim, )) 
-		_ = self.x2d.layers[10](zd_dec)
-		for i in range(11, 21):
-			_ = self.x2d.layers[i](_)
-		decoded_dt_ = self.x2d.layers[21](_)
+		_ = self.d2d.layers[9](zd_dec)
+		for i in range(10, 17):
+			_ = self.d2d.layers[i](_)
+		decoded_dt_ = self.d2d.layers[17](_)
 		self.zd2d = Model(zd_dec, decoded_dt_)
 
     

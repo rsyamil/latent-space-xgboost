@@ -18,6 +18,9 @@ class PlotLosses(keras.callbacks.Callback):
 		self.losses.append(logs.get('loss'))
 		self.val_losses.append(logs.get('val_loss'))
 		self.i += 1
+		
+		print(len(self.losses))
+		
 		clear_output(wait=True)
 		plt.plot(self.x, self.losses, label="loss", c = 'green')
 		plt.plot(self.x, self.val_losses, label="val_loss", c = 'red')
@@ -25,24 +28,15 @@ class PlotLosses(keras.callbacks.Callback):
 		plt.show()
         
 #function to view multiple losses
-def plotAllLosses(loss1, loss2):         
+def plotAllLosses(loss1):         
 	N, m1f = loss1.shape
-	_, m2f = loss2.shape
 
 	print(loss1.shape)
-	print(loss2.shape)
 
-	fig = plt.figure(figsize=(6, 12))
+	fig = plt.figure(figsize=(6, 6))
 	plt.subplot(2, 1, 1)
 	plt.plot(loss1[:, 0], label='l1', linewidth=3)
 	plt.plot(loss1[:, 1], label='l2')
-	plt.plot(loss1[:, 2], label='l3')
-	plt.plot(loss1[:, 3], label='l4')
-	plt.legend()
-
-	plt.subplot(2, 1, 2)
-	plt.plot(loss2[:, 0], label='l1')
-	plt.plot(loss2[:, 1], label='l2')
 	plt.legend()
 
 	return fig
