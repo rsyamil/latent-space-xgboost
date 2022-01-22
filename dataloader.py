@@ -12,9 +12,11 @@ class DataLoader:
 
 		self.x = []         	#(600, 6)
 		self.y = []         	#(600, 60, 3)
-
+		self.y_cumm = []		#(600, 1)
+		
 		self.x_raw = []         #(600, 6)
 		self.y_raw = []         #(600, 60, 3)
+		self.y_cumm_raw = []	#(600, 1)
 
 		self.x_min = 0
 		self.x_max = 0
@@ -45,6 +47,10 @@ class DataLoader:
 		water = df[:, 68:128]
 		gas = df[:, 128:188]
 		self.y = np.stack((oil, water, gas), axis=2)
+		
+		#calculate cumulative oil
+		self.y_cumm_raw = np.sum(oil, axis=1)
+		self.y_cumm = (self.y_cumm_raw - np.min(self.y_cumm_raw))/(np.max(self.y_cumm_raw) - np.min(self.y_cumm_raw))
 
 		#shuffle x and y together, since theyre from the same provenance! 
 		np.random.seed(77)
@@ -75,8 +81,11 @@ class DataLoader:
 		x_test = self.x[self.test_idx]
 		y_train = self.y[self.train_idx]
 		y_test = self.y[self.test_idx]
+		
+		y_cumm_train = self.y_cumm[self.train_idx]
+		y_cumm_test = self.y_cumm[self.test_idx]
 
-		return x_train, x_test, y_train, y_test
+		return x_train, x_test, y_train, y_test, y_cumm_train, y_cumm_test
     
         
 
