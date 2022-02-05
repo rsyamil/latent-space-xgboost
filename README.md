@@ -12,3 +12,7 @@ trees
 │   ├── trees-vector-independent.ipynb
 │   └── trees-vector-dependent.ipynb
 ```
+
+## Latent Space XGBoost 
+
+This repository demonstrates how XGBoost can be used to predict latent variables that represent very high-dimensional multivariate production profiles from unconventional reservoirs. 
