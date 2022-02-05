@@ -5,15 +5,15 @@ Tree-based algorithms for production prediction (multivariate profiles) in uncon
 trees 
 │
 └─── sim-case
-│
-└───────── trees-scalar.ipynb
-│
-└───────── trees-vector-independent.ipynb
-│
-└───────── trees-vector-dependent.ipynb
+	│
+	└─── trees-scalar.ipynb
+	│
+	└─── trees-vector-independent.ipynb
+	│
+	└─── trees-vector-dependent.ipynb
 │   
 └─── field-case
-│
-└───────── trees-vector-independent.ipynb
-│
-└───────── trees-vector-dependent.ipynb
+	│
+	└───  trees-vector-independent.ipynb
+	│
+	└───  trees-vector-dependent.ipynb
