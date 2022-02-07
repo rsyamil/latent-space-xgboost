@@ -36,6 +36,22 @@ def normalizeProps(data):
     for i in range(data.shape[1]):
         output_maxs[i] = np.max(data[:, i])
     return (data/(output_maxs)), output_maxs
+	
+#function to plot the density plot
+def histplot(data_train, data_test):
+	col_names = ['$x_1$', '$x_2$', '$x_3$', '$x_4$', '$x_5$']
+	plt.figure(figsize=(14, 3))
+	for idx, feature in enumerate(col_names):
+		plt.subplot(1, 5, idx+1)
+		dtr = data_train[:, idx]
+		dts = data_test[:, idx]
+		dtr = dtr[~np.isnan(dtr)]	#drop existing nans
+		dts = dts[~np.isnan(dts)]
+		new_bins = np.linspace(np.min(dtr), np.max(dtr), 30)
+		sns.distplot(dtr, hist=True, bins=new_bins, norm_hist=False, kde=False, label="Train")
+		sns.distplot(dts, hist=True, bins=new_bins, norm_hist=False, kde=False, label="Test")
+		plt.tick_params(axis='both', which='both', bottom='on', top='off', labelbottom='on', right='off', left='on', labelleft='off')
+		plt.tight_layout(), plt.legend(), plt.title(feature)
 
 class DataLoader:
 
@@ -53,6 +69,7 @@ class DataLoader:
 		
 		self.x_maxs = None
 		self.d_cumm_maxs = None
+		self.cumm_norm = None
 		
 		self.train_idx = None
 		self.test_idx = None
@@ -74,6 +91,9 @@ class DataLoader:
 					
 		#normalize by phase
 		self.d, self.d_cumm_maxs = normalizeOutput(self.d)
+		
+		#normalize cumulative production (scalar)
+		self.cumm_norm = self.cumm/np.max(self.cumm)
 			
 	#split data, test data has full attributes and training data may have missign values
 	def get_split(self):
@@ -107,7 +127,7 @@ class DataLoader:
 		for i in range(self.x.shape[1]):			#by features
 			for j in range(self.x.shape[0]):		#by well
 				if self.x[j, i] == 0:
-					self.x[j, i] = x_means[i]
+					self.x_imputed[j, i] = x_means[i]
 		
 		x_nans_train = self.x_nans[self.train_idx]
 		x_nans_test = self.x_nans[self.test_idx]
@@ -118,7 +138,10 @@ class DataLoader:
 		y_train = self.d[self.train_idx]
 		y_test = self.d[self.test_idx]
 		
-		return x_nans_train, x_nans_test, x_imputed_train, x_imputed_test, y_train, y_test
+		cumm_train = self.cumm_norm[self.train_idx]
+		cumm_test = self.cumm_norm[self.test_idx]
+		
+		return x_nans_train, x_nans_test, x_imputed_train, x_imputed_test, y_train, y_test, cumm_train, cumm_test
 	    
     #plot fields
 	def plot_fields(self):
