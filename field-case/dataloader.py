@@ -22,37 +22,103 @@ def save_obj(obj, name):
 def load_obj(name ):
 	with open(name + '.pkl', 'rb') as f:
 		return pickle.load(f)
+		
+#function to normalize output by features: [num_data, timesteps, features]
+def normalizeOutput(data):
+	output_maxs = np.zeros([data.shape[1], data.shape[2]]) 
+	output_maxs[:, 0] = np.max(data[:, :, 0])
+	output_maxs[:, 1] = np.max(data[:, :, 1]) 
+	output_maxs[:, 2] = np.max(data[:, :, 2]) 
+	return (data/(output_maxs)), output_maxs
+	
+def normalizeProps(data):
+    output_maxs = np.zeros([data.shape[1],])
+    for i in range(data.shape[1]):
+        output_maxs[i] = np.max(data[:, i])
+    return (data/(output_maxs)), output_maxs
 
 class DataLoader:
 
-	def __init__(self, verbose=False, normalized=False):
+	def __init__(self, verbose=False):
 	
 		self.verbose = verbose
-		self.normalized = normalized
 
 		self.fileno = None
 		self.field_name = None
 		self.d = None
-		self.d_maxs = None
 		self.u = None
-		self.u_maxs = None
 		self.cumm = None
-		self.cumm_maxs = None
 		self.loc = None
 		self.x = None
+		
 		self.x_maxs = None
-	
+		self.d_cumm_maxs = None
+		
+		self.train_idx = None
+		self.test_idx = None
+		
 	def load_data(self):
-		if self.normalized:
-			#load the normalized data objects
-			self.fileno, self.field_name, self.d, self.d_maxs, self.u, self.cumm, self.cumm_maxs, self.loc, self.x, self.x_maxs = load_obj('Data_Field_Bakken/DATA-norm')
-		else:
 			#load cleaned data objects
 			self.fileno, self.field_name, self.d, self.u, self.cumm, self.loc, self.x = load_obj('Data_Field_Bakken/DATA-clean')
+			
+	def calculate_cumulative_d(self, truncate=True):
+		if truncate:
+			self.d = self.d[:, 0:60, :]
+			self.u = self.u[:, 0:60]
+				
+		#calculate the cumulative profiles for each well, each phase
+		for i in range(self.d.shape[0]):
+			for j in range(self.d.shape[2]):
+				for k in range(self.d.shape[1]-1):
+					self.d[i, k+1, j] = self.d[i, k+1, j] + self.d[i, k, j]
+					
+		#normalize by phase
+		self.d, self.d_cumm_maxs = normalizeOutput(self.d)
 			
 	#split data, test data has full attributes and training data may have missign values
 	def get_split(self):
 	
+		self.load_data()
+		self.calculate_cumulative_d()
+	
+		indicator_nans = np.zeros(self.x.shape)
+		indicator_nans[self.x==0] = np.nan
+		indicator_nans[self.x==1] = 1
+	
+		nans = np.isnan(indicator_nans)
+		nans_well = np.any(nans, axis=1)
+		
+		tot_data = self.x.shape[0]
+		idx = np.linspace(0, (tot_data)-1, tot_data, dtype=np.int32)
+		
+		self.train_idx = idx[nans_well==True]
+		self.test_idx = idx[nans_well==False]
+		
+		#normalize 
+		self.x, self.x_maxs = normalizeProps(self.x)
+		
+		#prepare input data with missing values as Nans
+		self.x_nans = np.copy(self.x)
+		self.x_nans[self.x==0] = np.nan
+		
+		#prepare input data without missing values (as global mean imputation)
+		self.x_imputed = np.copy(self.x)
+		x_means = np.mean(self.x, axis=0)
+		for i in range(self.x.shape[1]):			#by features
+			for j in range(self.x.shape[0]):		#by well
+				if self.x[j, i] == 0:
+					self.x[j, i] = x_means[i]
+		
+		x_nans_train = self.x_nans[self.train_idx]
+		x_nans_test = self.x_nans[self.test_idx]
+		
+		x_imputed_train = self.x_imputed[self.train_idx]
+		x_imputed_test = self.x_imputed[self.test_idx]
+		
+		y_train = self.d[self.train_idx]
+		y_test = self.d[self.test_idx]
+		
+		return x_nans_train, x_nans_test, x_imputed_train, x_imputed_test, y_train, y_test
 	    
     #plot fields
 	def plot_fields(self):
@@ -75,17 +141,68 @@ class DataLoader:
 		plt.scatter(self.loc[:,0], self.loc[:,1], s=100, c=cs[FieldName_idx])
 
 		plt.scatter(self.loc[self.train_idx,0], self.loc[self.train_idx,1], s=50, c='k', marker='x', label='Train')
-		plt.scatter(self.loc[self.transfer_idx,0], self.loc[self.transfer_idx,1], s=50, c='k', marker='|', label='Transfer')	
+		plt.scatter(self.loc[self.test_idx,0], self.loc[self.test_idx,1], s=50, c='k', marker='|', label='Test')	
 
 		plt.legend()
 		plt.xlabel("Latitude")
 		plt.ylabel("Longitude")
 		plt.axis('scaled')
-		plt.title(str(no_unique_fields) + " unique fields, " + str(len(self.train_idx)) + " train, "+ str(len(self.transfer_idx)) + " transfer")
+		plt.title(str(no_unique_fields) + " unique fields, " + str(len(self.train_idx)) + " train, "+ str(len(self.test_idx)) + " test")
 		plt.grid(False)
 		plt.tight_layout()
-		f.savefig('readme/field_parti_maps_'+self.ptype+'.png', dpi=300, bbox_inches='tight')
+		f.savefig('readme/field_parti_maps.png', dpi=300, bbox_inches='tight')
+		
+	def plot_wells(self):
+		plt.figure(figsize=[14, 14])
+		for i in range(15):
+			ax1 = plt.subplot(5, 3, i+1)
 
-    
-    
-    
+			#shift to view other sets
+			i = i + 0
+
+			_ = self.d[i]
+			ax1.plot(_[:, 2], c='r', label='Gas', alpha=0.8)
+			ax1.plot(_[:, 1], c='b', label='Water', alpha=0.8)
+			ax1.plot(_[:, 0], c='g', label='Oil', alpha=0.8)
+			ax1.legend()
+			ax1.set_xlabel('Timesteps')
+			ax1.set_ylabel('Rate')
+			ax1.set_title(self.fileno[i])
+
+			ax2 = ax1.twinx() 
+			c = 'tab:purple'
+
+			#plot control on another axis
+			_ = self.u[i]
+			ax2.plot(_, color=c)
+			ax2.set_ylabel('Control', color=c) 
+			ax2.tick_params(axis ='y', labelcolor=c)
+
+			ax1.grid(False)
+			ax2.grid(False)
+
+		plt.tight_layout()
+
+	#field data: display the output data
+	def plot_data_by_phase(self):
+	
+		plt.figure(figsize=[3, 3])
+		for i in range(self.d.shape[0]):
+			plt.plot(self.d[i, :, 0], c='green', alpha=0.4)
+		plt.legend(['Bakken'])
+		plt.title('Oil rates')
+			
+		plt.figure(figsize=[3, 3])
+		for i in range(self.d.shape[0]):
+			plt.plot(self.d[i, :, 1], c='red', alpha=0.4)   
+		plt.legend(['Bakken'])
+		plt.title('Gas rates')
+
+		plt.figure(figsize=[3, 3])
+		for i in range(self.d.shape[0]):
+			plt.plot(self.d[i, :, 2], c='blue', alpha=0.4)
+		plt.legend(['Bakken'])
+		plt.title('Water rates')
+		
+
+
