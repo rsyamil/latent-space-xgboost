@@ -9,8 +9,12 @@ trees
 │   ├── trees-vector-independent.ipynb
 │   └── trees-vector-dependent.ipynb
 ├── field-case
+│   ├── fcnn-vector-case-1.ipynb
+│   ├── fcnn-vector-case-2.ipynb
 │   ├── trees-vector-independent.ipynb
-│   └── trees-vector-dependent.ipynb
+│   ├── trees-vector-independent-nans.ipynb
+│   ├── trees-vector-dependent.ipynb
+│   └── trees-vector-dependent-nans.ipynb
 ```
 
 ## Latent Space XGBoost 
