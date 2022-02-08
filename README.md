@@ -1,9 +1,9 @@
-# trees
+# latent-space-xgboost
 
 Tree-based algorithms for production prediction (multivariate profiles) in unconventional reservoirs.
 
 ```
-trees 
+latent-space-xgboost
 ├── sim-case
 │   ├── trees-scalar.ipynb
 │   ├── trees-vector-independent.ipynb
@@ -17,6 +17,6 @@ trees
 │   └── trees-vector-dependent-nans.ipynb
 ```
 
-## Latent Space XGBoost 
+## Workflow 
 
 This repository demonstrates how XGBoost can be used to predict latent variables that represent very high-dimensional multivariate production profiles from unconventional reservoirs. 
