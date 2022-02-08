@@ -7,7 +7,11 @@ latent-space-xgboost
 ├── sim-case
 │   ├── trees-scalar.ipynb
 │   ├── trees-vector-independent.ipynb
-│   └── trees-vector-dependent.ipynb
+│   ├── trees-vector-independent-nans.ipynb
+│   ├── trees-vector-independent-impute.ipynb
+│   ├── trees-vector-dependent.ipynb
+│   ├── trees-vector-dependent-nans.ipynb
+│   └── trees-vector-dependent-impute.ipynb
 ├── field-case
 │   ├── fcnn-vector-case-1.ipynb
 │   ├── fcnn-vector-case-2.ipynb

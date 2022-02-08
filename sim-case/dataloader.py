@@ -4,6 +4,26 @@ import matplotlib.pyplot as plt
 import pandas as pd
 import matplotlib as m
 
+import seaborn as sns
+sns.set_style("whitegrid")
+sns.set_context("paper", rc={"font.size":14,"axes.titlesize":14,"axes.labelsize":14})  
+
+#function to plot the density plot
+def histplot(data_train, data_test):
+	col_names = ['Perm. (mD)', 'Poro. (ratio)', 'SW (ratio)', 'Thick. (m)', 'Press. (psi)', 'Density (kgm3)']
+	plt.figure(figsize=(9, 6))
+	for idx, feature in enumerate(col_names):
+		plt.subplot(2, 3, idx+1)
+		dtr = data_train[:, idx]
+		dts = data_test[:, idx]
+		dtr = dtr[~np.isnan(dtr)]	#drop existing nans
+		dts = dts[~np.isnan(dts)]
+		new_bins = np.linspace(np.min(dtr), np.max(dtr), 30)
+		sns.distplot(dtr, hist=True, bins=new_bins, norm_hist=False, kde=False, label="Train")
+		sns.distplot(dts, hist=True, bins=new_bins, norm_hist=False, kde=False, label="Test")
+		plt.tick_params(axis='both', which='both', bottom='on', top='off', labelbottom='on', right='off', left='on', labelleft='off')
+		plt.tight_layout(), plt.legend(), plt.title(feature)
+
 class DataLoader:
 
 	def __init__(self, verbose=False):
@@ -22,6 +42,8 @@ class DataLoader:
 		self.x_max = 0
 		self.y_min = np.array ([])   #(3,) for each channel
 		self.y_max = np.array ([])   #(3,)
+		
+		self.x_means = []
         
 	def normalize_x(self):
 		self.x_min = np.min(self.x, axis=0)
@@ -66,6 +88,9 @@ class DataLoader:
 
 		self.y_raw = np.copy(self.y)
 		self.normalize_y()
+		
+		#calculate the mean
+		self.x_means = np.mean(self.x, axis=0)
 
 	def get_data_split(self, split=0.8):
 	
