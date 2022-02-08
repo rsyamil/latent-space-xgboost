@@ -96,7 +96,7 @@ class DataLoader:
 		self.cumm_norm = self.cumm/np.max(self.cumm)
 			
 	#split data, test data has full attributes and training data may have missign values
-	def get_split(self):
+	def get_split(self, use_complete_data_only=False):
 	
 		self.load_data()
 		self.calculate_cumulative_d()
@@ -128,6 +128,25 @@ class DataLoader:
 			for j in range(self.x.shape[0]):		#by well
 				if self.x[j, i] == 0:
 					self.x_imputed[j, i] = x_means[i]
+					
+		#only use complete dataset only, ie the test dataset (small subset, further 60:40 split)
+		if use_complete_data_only:
+			train_idx_complete = self.test_idx[0:200]
+			test_idx_complete = self.test_idx[200:]
+			
+			self.train_idx = train_idx_complete
+			self.test_idx = test_idx_complete
+			
+			x_train = self.x_imputed[train_idx_complete]
+			x_test = self.x_imputed[test_idx_complete]
+			
+			y_train = self.d[train_idx_complete]
+			y_test = self.d[test_idx_complete]
+			
+			cumm_train = self.cumm_norm[train_idx_complete]
+			cumm_test = self.cumm_norm[test_idx_complete]
+			
+			return x_train, x_test, y_train, y_test, cumm_train, cumm_test
 		
 		x_nans_train = self.x_nans[self.train_idx]
 		x_nans_test = self.x_nans[self.test_idx]

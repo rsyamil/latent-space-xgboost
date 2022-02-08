@@ -33,10 +33,10 @@ class fcnn:
 
 		input_x = Input(shape=(self.x_dim, ))  
 
-		_ = Dense(7)(input_x)
+		_ = Dense(16)(input_x)
 		_ = LeakyReLU(alpha=0.3)(_)
 
-		_ = Dense(6)(_)
+		_ = Dense(8)(_)
 		_ = LeakyReLU(alpha=0.3)(_)
 
 		_ = Dense(5)(_)
