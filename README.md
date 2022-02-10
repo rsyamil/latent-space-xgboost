@@ -7,6 +7,8 @@ This repository demonstrates how XGBoost can be used to predict latent variables
 ```
 latent-space-xgboost
 ├── sim-case
+│   ├── fcnn-vector.ipynb
+│   ├── fcnn-vector-impute.ipynb
 │   ├── trees-scalar.ipynb
 │   ├── trees-vector-independent.ipynb
 │   ├── trees-vector-independent-nans.ipynb

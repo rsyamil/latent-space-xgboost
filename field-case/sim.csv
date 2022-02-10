@@ -35,3 +35,15 @@
 0.08,sim-indept-impute
 0.078,sim-indept-impute
 0.092,sim-indept-impute
+0.038,fcnn-full
+0.039,fcnn-full
+0.029,fcnn-full
+0.031,fcnn-full
+0.032,fcnn-full
+0.030,fcnn-full
+0.084,fcnn-impute
+0.090,fcnn-impute
+0.121,fcnn-impute
+0.113,fcnn-impute
+0.075,fcnn-impute
+0.126,fcnn-impute

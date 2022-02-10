@@ -21,6 +21,56 @@ from IPython.display import clear_output
 from tensorflow.keras.utils import plot_model
 from tensorflow.keras.models import load_model
 
+
+class fcnn:
+
+	def __init__(self, name=[], z_dim=3, x_dim=5):
+		self.name = name
+		self.x2zd = []
+		self.z_dim = z_dim
+		self.x_dim = x_dim
+		
+	def fcnn(self):
+
+		input_x = Input(shape=(self.x_dim, ))  
+
+		_ = Dense(16)(input_x)
+		_ = LeakyReLU(alpha=0.3)(_)
+
+		_ = Dense(8)(_)
+		_ = LeakyReLU(alpha=0.3)(_)
+
+		_ = Dense(5)(_)
+		_ = LeakyReLU(alpha=0.3)(_)
+
+		_ = Dense(4)(_)
+		_ = LeakyReLU(alpha=0.3)(_)
+
+		encoded_x = Dense(self.z_dim)(_)
+		
+		return input_x, encoded_x
+		
+	def train_fcnn(self, x_train, y_train, load = False, epoch=200):
+	
+		input_x, encoded_x = self.fcnn()
+		self.x2zd = Model(input_x, encoded_x)
+		
+		opt = keras.optimizers.Adam(lr=1e-3)
+		self.x2zd.compile(optimizer=opt, loss="mse", metrics=['mse'])		
+		self.x2zd.summary()
+		
+		plot_losses1 = util.PlotLosses()
+		history1 = History()
+
+		#train data recons AE
+		self.x2zd.fit(x_train, y_train,        
+				epochs = epoch,
+				batch_size = 128,
+				shuffle = True,
+				validation_split = 0.2,
+				callbacks = [plot_losses1, EarlyStopping(monitor='loss', patience=60), history1])
+		
+
 class models:
 
 	def __init__(self, name=[], z_dim=3, timesteps=12, n_features=3, verbose=False):
