@@ -111,13 +111,13 @@ class DataLoader:
 		tot_data = self.x.shape[0]
 		idx = np.linspace(0, (tot_data)-1, tot_data, dtype=np.int32)
 		
-		partition = int(tot_data*0.7)
-		idx = np.random.permutation(idx)
-		self.train_idx = idx[0:partition]
-		self.test_idx = idx[partition:]
+		#partition = int(tot_data*0.7)
+		#idx = np.random.permutation(idx)
+		#self.train_idx = idx[0:partition]
+		#self.test_idx = idx[partition:]
 		
-		#self.train_idx = idx[nans_well==True]
-		#self.test_idx = idx[nans_well==False]
+		self.train_idx = idx[nans_well==True]
+		self.test_idx = idx[nans_well==False]
 		
 		#normalize 
 		self.x, self.x_maxs = normalizeProps(self.x)
@@ -136,6 +136,7 @@ class DataLoader:
 					
 		#only use complete dataset only, ie the test dataset (small subset, further 60:40 split)
 		if use_complete_data_only:
+			self.test_idx = np.random.permutation(self.test_idx)
 			train_idx_complete = self.test_idx[0:200]
 			test_idx_complete = self.test_idx[200:]
 			
